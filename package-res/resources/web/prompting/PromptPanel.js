@@ -656,83 +656,125 @@ define(['amd!cdf/lib/underscore', 'cdf/lib/Base', 'cdf/Logger', 'dojo/number', '
             return result;
           };
 
-          if(diff.toRemove.length > 0) { // To Remove
-            for (var i in diff.toRemove) {
-              var param = diff.toRemove[i];
-              var component = _getComponentByParam(param, true); // get component panel
-              if (component != null) {
-                var toRemove = [ component ];
-                var panelComponent = this.dashboard.getComponentByName("prompt" + this.guid);
-                if (panelComponent && panelComponent.components.length <= 2) {
-                  var submitPanel = _findSubmitComponent(panelComponent);
-                  if (submitPanel) {
-                    toRemove.push(submitPanel);
-                    var index = panelComponent.components.indexOf(submitPanel);
-                    panelComponent.components.splice(index, 1);
-                    $("#" + submitPanel.htmlObject).remove(); // Clean up remaining html object
-                  }
-                }
+          if(diff.toRemove) { // To Remove
+            var toRemove = [];
+            for (var groupName in diff.toRemove) {
+              var removeWrap = diff.toRemove[groupName];
+              var params = removeWrap.params;
 
-                _removeComponents(toRemove);
+              for (var i = 0; i < params.length; i++) {
+                var param = params[i];
+                var component = _getComponentByParam(param, true); // get component panel
+                if (component != null) {
+                  toRemove.push(component);
 
-                // need remove component from prompt panel component also
-                var panelComponent = this.dashboard.getComponentByName("prompt" + this.guid);
-                if (panelComponent) {
-                  for (var i in panelComponent.components) {
-                    if (panelComponent.components[i].name == component.name) {
-                      panelComponent.components.splice(i, 1);
-                      break;
+                  var groupPanel = this.dashboard.getComponentByName(groupName);
+                  if (groupPanel) {
+                    var index = groupPanel.components.indexOf(component);
+                    if (index > -1) {
+                      groupPanel.components.splice(index, 1);
+                    }
+                    if (groupPanel.components.length == 0) {
+                      toRemove.push(groupPanel);
                     }
                   }
                 }
-
-                $("#" + component.htmlObject).remove(); // Clean up remaining html object
               }
             }
-          }
 
-          if(diff.toAdd.length > 0) { // To Add
-            for (var i in diff.toAdd) {
-              var param = diff.toAdd[i];
-              var component = this._buildPanelForParameter(param); // returns a panel component
-
-              var panelComponent = this.dashboard.getComponentByName("prompt" + this.guid);
-              panelComponent.components.push(component);
-
-              if (panelComponent.components.length > 0 && !_findSubmitComponent(panelComponent)) {
-                var submitPanel = _createWidgetForSubmitPanel.call(this);
-                panelComponent.components.push(submitPanel);
+            var panelComponent = this.dashboard.getComponentByName("prompt" + this.guid);
+            if (panelComponent) {
+              if (panelComponent.components.length <= 2) {
+                var submitPanel = _findSubmitComponent(panelComponent);
+                if (submitPanel) {
+                  toRemove.push(submitPanel);
+                }
               }
 
-              _addComponent(panelComponent);
+              // need remove component from prompt panel component also
+              for (var i in toRemove) {
+                var toRemoveComponent = toRemove[i];
+                var index = panelComponent.components.indexOf(toRemoveComponent);
+                if (index > -1) {
+                  panelComponent.components.splice(index, 1);
+                }
+              }
             }
+
+            _removeComponents(toRemove);
           }
 
-          if(diff.toChangeData.length > 0) { // To Change
-            for (var i in diff.toChangeData) {
-              var param = diff.toChangeData[i];
+          if(diff.toAdd) { // To Add
+            var panelComponent = this.dashboard.getComponentByName("prompt" + this.guid);
 
-              // Find selected value in param values list and set it. This works, even if the data in valuesArray is different
-              var selectedValues = param.getSelectedValuesValue();
-              for (var j in selectedValues) {
-                this.setParameterValue(param, selectedValues[j]);
+            for (var groupName in diff.toAdd) {
+              var addWrap = diff.toAdd[groupName];
+              var params = addWrap.params;
+
+              var fieldComponents = [];
+              for (var i = 0; i < params.length; i++) {
+                var param = params[i];
+                var component = this._buildPanelForParameter(param); // returns a panel component
+                fieldComponents.push(component);
               }
 
-              var component = _getComponentByParam(param);
-              if (component != null) {
-                // Create new widget to get properly formatted values array
-                var newValuesArray = WidgetBuilder.WidgetBuilder.build({
-                  param: param,
-                  promptPanel: this
-                }, param.attributes["parameter-render-type"]).valuesArray;
+              var groupPanel = this.dashboard.getComponentByName(groupName);
+              if (!groupPanel) {
+                groupPanel = _createWidgetForGroupPanel.call(this, addWrap.group, fieldComponents);
+                panelComponent.components.push(groupPanel);
+              } else {
+                groupPanel.components = groupPanel.components.concat(fieldComponents);
+              }
+            }
 
-                // Compare values array from param (which is formatted into valuesArray) with the current valuesArray
-                if (JSON.stringify(component.valuesArray) !== JSON.stringify(newValuesArray)) {
-                  component.valuesArray = newValuesArray;
+            if (panelComponent.components.length > 0 && !_findSubmitComponent(panelComponent)) {
+              var submitPanel = _createWidgetForSubmitPanel.call(this);
+              panelComponent.components.push(submitPanel);
+            }
+
+            _addComponent(panelComponent);
+          }
+
+          if(diff.toChangeData) { // To Change
+            for (var groupName in diff.toChangeData) {
+              var changeWrap = diff.toChangeData[groupName];
+              var params = changeWrap.params;
+
+              for (var i in params) {
+                var param = params[i];
+
+                // Find selected value in param values list and set it. This works, even if the data in valuesArray is different
+                var selectedValues = param.getSelectedValuesValue();
+                for (var j in selectedValues) {
+                  this.setParameterValue(param, selectedValues[j]);
                 }
 
-                // Update still needs to be called b/c we are setting a new value above
-                this.dashboard.updateComponent(component);
+                var component = _getComponentByParam(param);
+                if (component != null) {
+                  // Create new widget to get properly formatted values array
+                  var newValuesArray = WidgetBuilder.WidgetBuilder.build({
+                    param: param,
+                    promptPanel: this
+                  }, param.attributes["parameter-render-type"]).valuesArray;
+
+                  // Compare values array from param (which is formatted into valuesArray) with the current valuesArray
+                  if (JSON.stringify(component.valuesArray) !== JSON.stringify(newValuesArray)) {
+                    component.valuesArray = newValuesArray;
+                  }
+
+                  var groupPanel = this.dashboard.getComponentByName(groupName);
+                  for (var i in groupPanel.components) {
+                    if (groupPanel.components[i].name == component.name) {
+                      groupPanel.components[i] = component;
+                      break;
+                    }
+                  }
+                  var panelComponent = this.dashboard.getComponentByName("prompt" + this.guid);
+                  var _this = this;
+                  _mapComponents(panelComponent, function (component) {
+                    _this.dashboard.updateComponent(component);
+                  });
+                }
               }
             }
           }
