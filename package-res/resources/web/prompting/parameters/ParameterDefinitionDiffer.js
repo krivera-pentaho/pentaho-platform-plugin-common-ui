@@ -88,23 +88,27 @@ define([], function() {
 
         // find removed parameters
         oldParamDefn.mapParameters(function(param) {
-          var newParam = newParamDefn.getParameter(param.name);
-          if (!newParam) {
-            result.toRemove.push(param);
+          if (param.attributes.hidden == 'false') {
+            var newParam = newParamDefn.getParameter(param.name);
+            if (!newParam || newParam.attributes.hidden == 'true') {
+              result.toRemove.push(param);
+            }
           }
         });
         // find new and changed parameters
         newParamDefn.mapParameters(function(param) {
-          var oldParam = oldParamDefn.getParameter(param.name);
-          if (!oldParam) {
-            result.toAdd.push(param); // found newest parameters
-          } else if (this._isBehavioralAttrsChanged(oldParam, param)
-            || this._isErrorsChanged(param.name, oldParamDefn, newParamDefn)) {
-            // add parameter to remove and add arrays for recreating components
-            result.toRemove.push(oldParam);
-            result.toAdd.push(param);
-          } else if (this._isDataChanged(oldParam, param)) {
-            result.toChangeData.push(param);
+          if (param.attributes.hidden == 'false') {
+            var oldParam = oldParamDefn.getParameter(param.name);
+            if (!oldParam || oldParam.attributes.hidden == 'true') {
+              result.toAdd.push(param); // found newest parameters
+            } else if (this._isBehavioralAttrsChanged(oldParam, param)
+              || this._isErrorsChanged(param.name, oldParamDefn, newParamDefn)) {
+              // add parameter to remove and add arrays for recreating components
+              result.toRemove.push(oldParam);
+              result.toAdd.push(param);
+            } else if (this._isDataChanged(oldParam, param)) {
+              result.toChangeData.push(param);
+            }
           }
         }, this);
 

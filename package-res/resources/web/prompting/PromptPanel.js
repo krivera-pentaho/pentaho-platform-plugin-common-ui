@@ -620,16 +620,18 @@ define(['amd!cdf/lib/underscore', 'cdf/lib/Base', 'cdf/Logger', 'dojo/number', '
             return null;
           }).bind(this);
 
-          // Removes a single component from dashboard and prompt panel
-          var _removeComponent = (function(component) {
-            this.dashboard.removeComponent(component);
-            for (var i in this.components) {
-              if (this.components[i].name == component.name) {
-                this.components.splice(i, 1);
-                break;
+          // Removes components from dashboard and prompt panel
+          var _removeComponents = (function(components) {
+            this.removeDashboardComponents(components);
+            for ( var j in components) {
+              var component = components[j];
+              for ( var i in this.components) {
+                if (this.components[i].name == component.name) {
+                  this.components.splice(i, 1);
+                  break;
+                }
               }
             }
-            component.clear();
           }).bind(this);
 
           var _addComponent = (function(component) {
@@ -642,22 +644,51 @@ define(['amd!cdf/lib/underscore', 'cdf/lib/Base', 'cdf/Logger', 'dojo/number', '
             }
           }).bind(this);
 
+          var _findSubmitComponent = function(panelComponent) {
+            var result = null;
+            for (var i = 0; i < panelComponent.components.length; i++) {
+              if (panelComponent.components[i].promptType == "submit"
+                && panelComponent.components[i].type == "FlowPromptLayoutComponent") {
+                result = panelComponent.components[i];
+                break;
+              }
+            }
+            return result;
+          };
+
           if(diff.toRemove.length > 0) { // To Remove
             for (var i in diff.toRemove) {
               var param = diff.toRemove[i];
               var component = _getComponentByParam(param, true); // get component panel
-
               if (component != null) {
-                if (component.components) { // Panel component has many components to be cleaned up
-                  for (var j in component.components) { // Loop through panel components
-                    _removeComponent(component.components[j]);
+                var toRemove = [ component ];
+                var panelComponent = this.dashboard.getComponentByName("prompt" + this.guid);
+                if (panelComponent && panelComponent.components.length <= 2) {
+                  var submitPanel = _findSubmitComponent(panelComponent);
+                  if (submitPanel) {
+                    toRemove.push(submitPanel);
+                    var index = panelComponent.components.indexOf(submitPanel);
+                    panelComponent.components.splice(index, 1);
+                    $("#" + submitPanel.htmlObject).remove(); // Clean up remaining html object
                   }
                 }
-                _removeComponent(component);
+
+                _removeComponents(toRemove);
+
+                // need remove component from prompt panel component also
+                var panelComponent = this.dashboard.getComponentByName("prompt" + this.guid);
+                if (panelComponent) {
+                  for (var i in panelComponent.components) {
+                    if (panelComponent.components[i].name == component.name) {
+                      panelComponent.components.splice(i, 1);
+                      break;
+                    }
+                  }
+                }
+
                 $("#" + component.htmlObject).remove(); // Clean up remaining html object
               }
             }
-
           }
 
           if(diff.toAdd.length > 0) { // To Add
@@ -668,12 +699,12 @@ define(['amd!cdf/lib/underscore', 'cdf/lib/Base', 'cdf/Logger', 'dojo/number', '
               var panelComponent = this.dashboard.getComponentByName("prompt" + this.guid);
               panelComponent.components.push(component);
 
-              // Psuedo update call for panel component, without wiping out other components on update
-              var markup = panelComponent.getMarkupFor(component);
-              var className = component.promptType === 'submit' ? "submit-panel" : "prompt-panel";
-              $("#" + panelComponent.htmlObject + " ." + className).append(markup);
+              if (panelComponent.components.length > 0 && !_findSubmitComponent(panelComponent)) {
+                var submitPanel = _createWidgetForSubmitPanel.call(this);
+                panelComponent.components.push(submitPanel);
+              }
 
-              _addComponent(component);
+              _addComponent(panelComponent);
             }
           }
 
