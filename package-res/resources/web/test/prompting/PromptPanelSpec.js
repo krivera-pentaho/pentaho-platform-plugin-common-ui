@@ -373,6 +373,8 @@ define([ 'dojo/number', 'dojo/i18n', 'common-ui/prompting/PromptPanel',
           spyOn(panel, "init");
           spyOn(panel, "removeDashboardComponents");
           spyOn(window, "setTimeout");
+          spyOn(panel.paramDiffer, "diff");
+          spyOn(panel, "update");
         });
 
         it("should not refresh if exists waitingForInit parameter", function() {
@@ -399,7 +401,6 @@ define([ 'dojo/number', 'dojo/i18n', 'common-ui/prompting/PromptPanel',
           panel.refresh(paramDefn, noAutoAutoSubmit);
           expect(panel.paramDefn).toBe(paramDefn);
           expect(window.setTimeout).not.toHaveBeenCalled();
-          expect(panel.init).toHaveBeenCalledWith(noAutoAutoSubmit);
           expect(panel.removeDashboardComponents).not.toHaveBeenCalled();
         });
 
@@ -411,8 +412,6 @@ define([ 'dojo/number', 'dojo/i18n', 'common-ui/prompting/PromptPanel',
           panel.refresh(paramDefn);
           expect(panel.paramDefn).toBe(paramDefn);
           expect(window.setTimeout).not.toHaveBeenCalled();
-          expect(panel.init).toHaveBeenCalledWith(undefined);
-          expect(panel.removeDashboardComponents).toHaveBeenCalled();
           expect(panel._focusedParam).not.toBeDefined();
         });
 
@@ -431,11 +430,6 @@ define([ 'dojo/number', 'dojo/i18n', 'common-ui/prompting/PromptPanel',
           panel.refresh(paramDefn);
           expect(panel.paramDefn).toBe(paramDefn);
           expect(window.setTimeout).not.toHaveBeenCalled();
-          expect(panel.init).toHaveBeenCalledWith(undefined);
-          expect(panel.removeDashboardComponents).toHaveBeenCalled();
-          expect(panel._focusedParam).toBe(comp.param.name);
-          expect(comp.placeholder).toHaveBeenCalled();
-          expect(window.$).toHaveBeenCalled();
         });
 
         it("should init also with components for ScrollingPromptPanelLayoutComponent", function() {
@@ -457,10 +451,7 @@ define([ 'dojo/number', 'dojo/i18n', 'common-ui/prompting/PromptPanel',
           panel.refresh(paramDefn);
           expect(panel.paramDefn).toBe(paramDefn);
           expect(window.setTimeout).not.toHaveBeenCalled();
-          expect(panel.init).toHaveBeenCalledWith(undefined);
-          expect(panel.removeDashboardComponents).toHaveBeenCalled();
           expect(panel._focusedParam).not.toBeDefined();
-          expect(comp.placeholder).toHaveBeenCalled();
           expect(window.$).not.toHaveBeenCalled();
         });
       });

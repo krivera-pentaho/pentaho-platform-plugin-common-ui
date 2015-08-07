@@ -49,12 +49,14 @@ define([], function() {
       },
 
       _fillWrapObj : function(result, propName, group, param) {
-        var params = result[propName][group.name] || [];
-        params.push(param);
-        result[propName][group.name] = {
-          group : group,
-          params : params
-        };
+        if (!result[propName][group.name]) {
+          result[propName][group.name] = {
+            group : group,
+            params : []
+          }
+        }
+
+        result[propName][group.name].params.push(param);
       },
 
       _hasResultProperties : function(obj) {
@@ -116,24 +118,21 @@ define([], function() {
         var result = {
           toAdd : {},
           toChangeData : {},
-          toRemove : {},
-          changesToMake : function() {
-            return _this._hasResultProperties(result.toAdd) || _this._hasResultProperties(result.toChangeData) || _this._hasResultProperties(result.toRemove);
-          }
+          toRemove : {}
         };
 
         // find removed parameters
         oldParamDefn.mapParameters(function(param, group) {
-          if (param.attributes.hidden == 'false') {
+          if (!param.attributes.hidden) { // Can be 'false' or undefined
             var newParam = newParamDefn.getParameter(param.name);
             if (!newParam || newParam.attributes.hidden == 'true') {
               this._fillWrapObj(result, "toRemove", group, param);
             }
           }
-        });
+        }, this);
         // find new and changed parameters
         newParamDefn.mapParameters(function(param, group) {
-          if (param.attributes.hidden == 'false') {
+          if (!param.attributes.hidden) { // Can be 'false' or undefined
             var oldParam = oldParamDefn.getParameter(param.name);
             if (!oldParam || oldParam.attributes.hidden == 'true') {
               this._fillWrapObj(result, "toAdd", group, param); // found newest parameters

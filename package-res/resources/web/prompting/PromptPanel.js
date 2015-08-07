@@ -586,10 +586,8 @@ define(['amd!cdf/lib/underscore', 'cdf/lib/Base', 'cdf/Logger', 'dojo/number', '
           if (paramDefn) {
             var diff = this.paramDiffer.diff(this.paramDefn, paramDefn);
 
-            if (diff.changesToMake()) {
-              this.paramDefn = paramDefn;
-              this.update(diff, noAutoAutoSubmit);
-            }
+            this.paramDefn = paramDefn;
+            this.update(diff, noAutoAutoSubmit);
           }
         },
 
