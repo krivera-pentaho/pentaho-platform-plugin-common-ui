@@ -59,10 +59,6 @@ define([], function() {
         result[propName][group.name].params.push(param);
       },
 
-      _hasResultProperties : function(obj) {
-        return Object.keys(obj).length > 0;
-      },
-
       /**
        * Returns result differences object for oldParamDefn and newParamDefn object. The result contains group and arrays of
        * parameters that were added to newParamDefn object, were removed from newParamDefn object and were changed in
@@ -114,7 +110,6 @@ define([], function() {
           return false;
         }
 
-        var _this = this;
         var result = {
           toAdd : {},
           toChangeData : {},
@@ -123,7 +118,7 @@ define([], function() {
 
         // find removed parameters
         oldParamDefn.mapParameters(function(param, group) {
-          if (!param.attributes.hidden) { // Can be 'false' or undefined
+          if (!param.attributes.hidden || param.attributes.hidden == 'false') { // Can be 'false' or undefined
             var newParam = newParamDefn.getParameter(param.name);
             if (!newParam || newParam.attributes.hidden == 'true') {
               this._fillWrapObj(result, "toRemove", group, param);
@@ -132,7 +127,7 @@ define([], function() {
         }, this);
         // find new and changed parameters
         newParamDefn.mapParameters(function(param, group) {
-          if (!param.attributes.hidden) { // Can be 'false' or undefined
+          if (!param.attributes.hidden || param.attributes.hidden == 'false') { // Can be 'false' or undefined
             var oldParam = oldParamDefn.getParameter(param.name);
             if (!oldParam || oldParam.attributes.hidden == 'true') {
               this._fillWrapObj(result, "toAdd", group, param); // found newest parameters
