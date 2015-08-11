@@ -697,7 +697,7 @@ define([ 'dojo/number', 'dojo/i18n', 'common-ui/prompting/PromptPanel',
               params : [paramSpy]
             };
 
-            componentSpy = jasmine.createSpy("componentSpy");
+            componentSpy = jasmine.createSpyObj("componentSpy", [ "clear" ]);
             componentSpy.parameter = paramName;
             componentSpy.type = "TestPanel";
 
@@ -706,16 +706,16 @@ define([ 'dojo/number', 'dojo/i18n', 'common-ui/prompting/PromptPanel',
           });
 
           it ("should successfully remove the provided components", function() {
-            var groupPanelSpy = jasmine.createSpy("groupPanelSpy");
+            var groupPanelSpy = jasmine.createSpyObj("groupPanelSpy", [ "clear" ]);
             groupPanelSpy.components = [componentSpy];
             spyOn(groupPanelSpy.components, "indexOf").and.callThrough();
             spyOn(groupPanelSpy.components, "splice").and.callThrough();
 
-            var submitComponentSpy = jasmine.createSpy("submitComponentSpy");
+            var submitComponentSpy = jasmine.createSpyObj("submitComponentSpy", [ "clear" ]);
             submitComponentSpy.promptType = "submit";
             submitComponentSpy.type = "FlowPromptLayoutComponent";
 
-            var panelSpy = jasmine.createSpy("panelSpy");
+            var panelSpy = jasmine.createSpyObj("panelSpy", [ "clear" ]);
             panelSpy.components = [submitComponentSpy];
             spyOn(panelSpy.components, "splice").and.callThrough();
 
