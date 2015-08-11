@@ -783,7 +783,7 @@ define(['amd!cdf/lib/underscore', 'cdf/lib/Base', 'cdf/Logger', 'dojo/number', '
                 this.setParameterValue(param, selectedValues[j]);
               }
 
-              var component = _getComponentByParam.call(this, param);
+              var component = _getComponentByParam.call(this, param, true);
               if (component != null) {
                 // Create new widget to get properly formatted values array
                 var newValuesArray = this.widgetBuilder.build({

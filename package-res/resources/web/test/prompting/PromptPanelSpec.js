@@ -59,7 +59,7 @@ define([ 'dojo/number', 'dojo/i18n', 'common-ui/prompting/PromptPanel',
       beforeEach(function() {
         paramDefn = jasmine.createSpyObj("paramDefn", [ "allowAutoSubmit" ]);
         paramDefn.allowAutoSubmit.and.returnValue(true);
-        dashboardSpy = jasmine.createSpyObj("dashboardSpy", [ "setParameter", "getParameterValue", "getComponentByName" ]);
+        dashboardSpy = jasmine.createSpyObj("dashboardSpy", [ "setParameter", "getParameterValue", "getComponentByName", "updateComponent" ]);
         panel = new PromptPanel(testId, paramDefn);
         panel.dashboard = dashboardSpy;
       });
@@ -746,6 +746,116 @@ define([ 'dojo/number', 'dojo/i18n', 'common-ui/prompting/PromptPanel',
         });
 
         describe("_changeComponentsByDiff", function() {
+          var originalParam, change, componentSpy,
+              paramName = "string_test_param", guid = "guid", groupName = "test_group",
+              changedParam, value1, value2;
+
+          beforeEach(function() {
+            // set up some parameter values
+            value1 = new ParameterValue();
+            value1.value = "jitsu";
+            value1.label = "jitsu";
+            value1.type = "java.lang.String";
+
+            value2 = new ParameterValue();
+            value2.value = "do";
+            value2.label = "dō";
+            value2.selected = true;
+            value2.type = "java.lang.String";
+
+            var paramDefn;
+            // create a parameter
+            originalParam = new Parameter();
+            originalParam.type = "java.lang.String";
+            originalParam.name = paramName;
+            originalParam.multiSelect = true;
+            originalParam.values = [ value1, value2 ];
+
+            paramDefn = new ParameterDefinition();
+            var group = new ParameterGroup();
+            group.name = groupName;
+            group.label = "test_group_label";
+            paramDefn.parameterGroups.push(group);
+            group.parameters.push(originalParam);
+
+            panel.paramDefn = paramDefn;
+            change = {};
+            change[groupName] = {
+              params: [originalParam]
+            }
+
+            spyOn(panel, "setParameterValue");
+            spyOn(panel.widgetBuilder.mapping['default'], '_createFormatter').and.returnValue(null);
+            spyOn(panel.widgetBuilder.mapping['default'], '_createDataTransportFormatter').and.returnValue(null);
+
+            componentSpy = jasmine.createSpyObj("componentSpy", ["getPanel"]);
+            componentSpy.parameter = guid + paramName;
+            componentSpy.type = "TestPanel";
+            componentSpy.name = "testComponent";
+
+            panel.components = [componentSpy];
+            panel.dashboard.components = [componentSpy];
+            panel.guid = guid;
+
+            panel.dashboard.getComponentByName.and.returnValue(group);
+          });
+
+          it("should handle null param", function() {
+            panel._changeComponentsByDiff(null);
+          });
+
+          it("should set the selected value", function() {
+
+            panel._changeComponentsByDiff(change);
+
+            expect(panel.setParameterValue).toHaveBeenCalledWith(originalParam, "do");
+          });
+
+          it("should compare the data values to determine if a change was made.", function() {
+
+            var submitComponentSpy = jasmine.createSpy("submitComponentSpy");
+            submitComponentSpy.promptType = "submit";
+            submitComponentSpy.type = "FlowPromptLayoutComponent";
+
+            var panelSpy = jasmine.createSpy("panelSpy");
+
+            var groupPanelSpy = jasmine.createSpy("groupPanelSpy");
+            groupPanelSpy.components = [componentSpy];
+
+            panelSpy.components = [submitComponentSpy, groupPanelSpy];
+            spyOn(panelSpy.components, "splice").and.callThrough();
+
+            panel.dashboard.getComponentByName.and.callFake(function(name) {
+              if (name == groupName) {
+                return groupPanelSpy;
+              } else if (name == "prompt" + guid) {
+                return panelSpy;
+              }
+            });
+
+            changedParam = new Parameter();
+            changedParam.type = "java.lang.String";
+            changedParam.name = paramName;
+            changedParam.values = [ value1, value2 ];
+            var valuesArray = [["jitsu", "dō", "-- no selection --"],["jitsu", "do", "_none_"]];
+            spyOn(panel.widgetBuilder, "build").and.callFake(function(obj, type) {
+              return { "valuesArray": valuesArray };
+            });
+
+            change = {};
+            change[groupName] = {
+              params: [changedParam]
+            }
+
+            panel._changeComponentsByDiff(change);
+
+            expect(panel.dashboard.updateComponent).toHaveBeenCalledWith(panelSpy);
+            expect(panel.dashboard.getComponentByName).toHaveBeenCalledWith(groupName);
+            expect(panel.dashboard.getComponentByName).toHaveBeenCalledWith("prompt"+guid);
+            expect(groupPanelSpy.components[0]).toBe(componentSpy);
+            expect(componentSpy.valuesArray).toBe(valuesArray);
+            expect(panel.widgetBuilder.build).toHaveBeenCalled();
+          });
 
         });
       });
