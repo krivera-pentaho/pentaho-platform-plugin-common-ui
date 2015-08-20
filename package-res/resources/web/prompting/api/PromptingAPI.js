@@ -15,20 +15,32 @@
  *
  */
 
+/**
+ * The Prompting API Class
+ * This is a simple and concise mechanism for easily plugging prompting.
+ *
+ * @name PromptingAPI
+ * @class
+ * @property {OperationAPI} operation The prompting operation API
+ * @property {EventAPI} event The prompting event API
+ * @property {UiAPI} ui The prompting ui API
+ * @property {UtilAPI} util The prompting utility API
+ * @property {Object} log The console logger of prompting API
+ */
 define(["../PromptPanel", "./OperationAPI", "./EventAPI", "./UiAPI", "./UtilAPI"], function(PromptPanel, OperationAPI, EventAPI, UiAPI, UtilAPI) {
-  var api = {
-    operation: new OperationAPI(api),
-    util: new EventAPI(api),
-    ui: new UiAPI(api),
-    event: new UtilAPI(api),
-    log: {
+  var API = function() {
+    this.operation = new OperationAPI(this),
+    this.util = new UtilAPI(this),
+    this.ui = new UiAPI(this),
+    this.event = new EventAPI(this),
+    this.log = {
       info: function(msg) {
         console.log(msg);
       },
       warn: function(msg) {
         console.warn(msg)
       },
-      err: function(msg, throwException) {
+      error: function(msg, throwException) {
         if(throwException) {
           throw msg;
         }
@@ -37,5 +49,5 @@ define(["../PromptPanel", "./OperationAPI", "./EventAPI", "./UiAPI", "./UtilAPI"
     }
   };
 
-  return api;
+  return API;
 });

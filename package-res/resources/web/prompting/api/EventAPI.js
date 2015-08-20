@@ -15,13 +15,21 @@
  *
  */
 
+/**
+ * The Prompting Event API Class
+ * Provides general functions for working with different events of prompting.
+ *
+ * @name EventAPI
+ * @class
+ */
 define([], function() {
   return function(api) {
     /**
      * Registers a before render event
      *
-     * @method beforeRender
-     * @param callback {Function} The function to be executed when the event is triggered
+     * @name EventAPI#beforeRender
+     * @method
+     * @param {Function} callback The function to be executed when the event is triggered
      */
     this.beforeRender = function(callback) {
       api.operation._getPromptPanel().dashboard.on('cdf:beforeRender', callback);
@@ -30,31 +38,34 @@ define([], function() {
     /**
      * Registers an after render event
      *
-     * @method afterRender
-     * @param callback {Function} The function to be executed when the event is triggered
+     * @name EventAPI#afterRender
+     * @method
+     * @param {Function} callback The function to be executed when the event is triggered
      */
     this.afterRender = function(callback) {
-      api.operation._getPromptPanel().dashboard.on('cdf:postInit', callback);
+      api.operation._getPromptPanel().dashboard.on('cdf:afterRender', callback);
     };
 
     /**
      * Registers a parameter changed event
      *
-     * @method parameterChanged
-     * @param callback {Function} The function to be executed when the event is triggered
+     * @name EventAPI#parameterChanged
+     * @method
+     * @param {Function} callback The function to be executed when the event is triggered
      */
     this.parameterChanged = function(callback) {
-      api.operation._getPromptPanel().dashboard.on('cdf:postInit', callback);
+      api.operation._getPromptPanel().dashboard.on('cdf:parameterChanged', callback);
     };
 
     /**
      * Registers a post init event
      *
-     * @method postInit
-     * @param callback {Function} The function to be executed when the event is triggered
+     * @name EventAPI#postInit
+     * @method
+     * @param {Function} callback The function to be executed when the event is triggered
      */
     this.postInit = function(callback) {
       api.operation._getPromptPanel().dashboard.on('cdf:postInit', callback);
-    }
+    };
   };
 });
